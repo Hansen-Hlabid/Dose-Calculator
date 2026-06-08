@@ -1,0 +1,646 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hlab.id - Hlab Reef Calculator</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .prod-content { display: none; }
+        .prod-content.active { display: block; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen relative">
+
+    <!-- Language Bar -->
+    <div class="bg-gray-950 px-4 py-2 flex justify-end items-center gap-2 border-b border-gray-800 text-xs">
+        <span class="text-gray-400 font-medium">Language / Bahasa:</span>
+        <button onclick="setLanguage('id')" id="btn-lang-id" class="px-2 py-1 rounded bg-blue-600 text-white font-bold transition-all cursor-pointer">ID</button>
+        <button onclick="setLanguage('en')" id="btn-lang-en" class="px-2 py-1 rounded bg-gray-800 text-gray-400 font-bold transition-all cursor-pointer">EN</button>
+    </div>
+
+   <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-950 to-indigo-950 text-center py-5 border-b border-blue-800 shadow-xl flex flex-col items-center justify-center gap-2">
+        <!-- PANGGIL LOGO DI SINI -->
+        <img src="logo.png" alt="Hlab.id Logo" class="h-50 w-auto object-contain">
+        
+        <p data-lang="id" class="text-xs text-blue-400 uppercase tracking-wider font-bold">Hlab Kalkulator Reef Tank</p>
+        <p data-lang="en" class="text-xs text-blue-400 uppercase tracking-wider font-bold hidden">Hlab Reef Tank Calculator</p>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 pb-24">
+        
+        <!-- 1. GLOBAL WATER VOLUME CONTAINER -->
+        <div class="bg-gray-800 p-4 rounded-xl shadow-lg mb-4 border border-gray-700">
+            <label data-lang="id" class="block text-sm font-bold text-gray-300 mb-1">1. Total Volume Air Laut</label>
+            <label data-lang="en" class="block text-sm font-bold text-gray-300 mb-1 hidden">1. Total Marine Water Volume</label>
+            
+            <div class="flex gap-2">
+                <input type="number" id="globalVolume" placeholder="Contoh: 100" oninput="runCalculation()" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-lg font-bold focus:outline-none focus:border-blue-500">
+                <span class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 font-bold text-gray-300 flex items-center">Liter</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1">*Sudah termasuk Main Tank + Sump.</p>
+        </div>
+
+        <!-- 2. PRODUCT SELECTOR -->
+        <div class="bg-gray-800 p-4 rounded-xl shadow-lg mb-6 border border-gray-700">
+            <label data-lang="id" class="block text-sm font-bold text-gray-300 mb-1.5">2. Pilih Produk Hlab</label>
+            <label data-lang="en" class="block text-sm font-bold text-gray-300 mb-1.5 hidden">2. Select Hlab Product</label>
+            
+            <div class="relative">
+                <select id="productDropdown" onchange="switchProduct(this.value)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2.5 text-white font-bold text-xs appearance-none focus:outline-none focus:border-blue-500 cursor-pointer">
+                    <optgroup label="🪸 PARAMETER UTAMA (BIG 3)" id="grp-big3">
+                        <option value="kh-std">Alkalinity Hlab</option>
+                        <option value="kh-plus">Alkalinity Plus Hlab</option>
+                        <option value="kh-minus">KH Minus Hlab</option>
+                        <option value="ca-std">Calcium Hlab</option>
+                        <option value="ca-plus">Calcium Plus Hlab</option>
+                        <option value="mg-std">Magnesium Hlab</option>
+                        <option value="mg-plus">Magnesium Plus Hlab</option>
+                    </optgroup>
+                    <optgroup label="📈 NUTRIENT RAISER & REDUCER" id="grp-nutrient">
+                        <option value="po4-plus">Phosphate Plus</option>
+                        <option value="no3-plus">Nitrat Plus</option>
+                        <option value="reducer-plus">Hlab Reducer Plus</option>
+                        <option value="reducer-hlab">Hlab Reducer</option>
+                    </optgroup>
+                    <optgroup label="🦠 LIFE BACTERIA" id="grp-bacteria">
+                        <option value="bacteria-all">Hlab Life Bacteria</option>
+                    </optgroup>
+                    <optgroup label="🎨 TRACE ELEMENT" id="grp-trace">
+                        <option value="trace-a">Hlab Trace Element A</option>
+                        <option value="trace-b">Hlab Trace Element B</option>
+                        <option value="trace-c">Hlab Trace Element C</option>
+                        <option value="trace-d">Hlab Trace Element D</option>
+                        <option value="trace-e">Hlab Trace Element E</option>
+                    </optgroup>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= DYNAMIC PRODUCT INTERFACES ================= -->
+        
+        <!-- ALKALINITY HLAB -->
+        <div id="prod-kh-std" class="prod-content active bg-gray-800 p-4 rounded-xl border border-blue-800 shadow-md">
+            <h3 class="text-sm font-black text-blue-400 mb-3 uppercase tracking-wider">Alkalinity Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1"><span data-lang="id">dKH Saat Ini</span><span data-lang="en" class="hidden">Current dKH</span></label>
+                    <input type="number" id="curr-kh-std" step="0.1" placeholder="7.0" oninput="calcKhStd()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1"><span data-lang="id">Target dKH</span><span data-lang="en" class="hidden">Target dKH</span></label>
+                    <input type="number" id="targ-kh-std" step="0.1" placeholder="8.0" oninput="calcKhStd()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-blue-400"><span id="out-kh-std">0</span> ml</span></div>
+                <p id="split-kh-std" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 7.7 - 9 dKH. Kenaikan Maksimal 0.5 dKH / hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 7.7 - 9 dKH. Max increase 0.5 dKH / day.</p>
+            </div>
+        </div>
+
+        <!-- ALKALINITY PLUS HLAB -->
+        <div id="prod-kh-plus" class="prod-content bg-gray-800 p-4 rounded-xl border border-cyan-800 shadow-md">
+            <h3 class="text-sm font-black text-cyan-400 mb-3 uppercase tracking-wider">Alkalinity Plus Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1"><span data-lang="id">dKH Saat Ini</span><span data-lang="en" class="hidden">Current dKH</span></label>
+                    <input type="number" id="curr-kh-plus" step="0.1" placeholder="7.0" oninput="calcKhPlus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1"><span data-lang="id">Target dKH</span><span data-lang="en" class="hidden">Target dKH</span></label>
+                    <input type="number" id="targ-kh-plus" step="0.1" placeholder="8.0" oninput="calcKhPlus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-cyan-400"><span id="out-kh-plus">0</span> ml</span></div>
+                <p id="split-kh-plus" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 7.7 - 9 dKH. Kenaikan Maksimal 0.5 dKH / hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 7.7 - 9 dKH. Max increase 0.5 dKH / day.</p>
+            </div>
+        </div>
+
+        <!-- KH MINUS HLAB -->
+        <div id="prod-kh-minus" class="prod-content bg-gray-800 p-4 rounded-xl border border-red-900 shadow-md">
+            <h3 class="text-sm font-black text-red-400 mb-3 uppercase tracking-wider">KH Minus Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1"><span data-lang="id">dKH Saat Ini</span><span data-lang="en" class="hidden">Current dKH</span></label>
+                    <input type="number" id="curr-kh-minus" step="0.1" placeholder="10.0" oninput="calcKhMinus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1"><span data-lang="id">Target dKH</span><span data-lang="en" class="hidden">Target dKH</span></label>
+                    <input type="number" id="targ-kh-minus" step="0.1" placeholder="8.5" oninput="calcKhMinus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-red-400"><span id="out-kh-minus">0</span> ml</span></div>
+                <p id="split-kh-minus" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 7.7 - 9 dKH. Penurunan Maksimal 0.5 dKH / hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 7.7 - 9 dKH. Max decrease 0.5 dKH / day.</p>
+            </div>
+        </div>
+
+        <!-- CALCIUM HLAB -->
+        <div id="prod-ca-std" class="prod-content bg-gray-800 p-4 rounded-xl border border-emerald-800 shadow-md">
+            <h3 class="text-sm font-black text-emerald-400 mb-3 uppercase tracking-wider">Calcium Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Ca Real (mg/L)</label>
+                    <input type="number" id="curr-ca-std" placeholder="390" oninput="calcCaStd()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Ca Target (mg/L)</label>
+                    <input type="number" id="targ-ca-std" placeholder="420" oninput="calcCaStd()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-emerald-400"><span id="out-ca-std">0</span> ml</span></div>
+                <p id="split-ca-std" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 360 - 460 mg/l. Kenaikan Maksimal 30 mg/l per hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 360 - 460 mg/l. Max increase 30 mg/l per day.</p>
+            </div>
+        </div>
+
+        <!-- CALCIUM PLUS HLAB -->
+        <div id="prod-ca-plus" class="prod-content bg-gray-800 p-4 rounded-xl border border-teal-800 shadow-md">
+            <h3 class="text-sm font-black text-teal-400 mb-3 uppercase tracking-wider">Calcium Plus Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Ca Real (mg/L)</label>
+                    <input type="number" id="curr-ca-plus" placeholder="390" oninput="calcCaPlus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Ca Target (mg/L)</label>
+                    <input type="number" id="targ-ca-plus" placeholder="420" oninput="calcCaPlus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-teal-400"><span id="out-ca-plus">0</span> ml</span></div>
+                <p id="split-ca-plus" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 360 - 460 mg/l. Kenaikan Maksimal 30 mg/l per hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 360 - 460 mg/l. Max increase 30 mg/l per day.</p>
+            </div>
+        </div>
+
+        <!-- MAGNESIUM HLAB -->
+        <div id="prod-mg-std" class="prod-content bg-gray-800 p-4 rounded-xl border border-purple-800 shadow-md">
+            <h3 class="text-sm font-black text-purple-400 mb-3 uppercase tracking-wider">Magnesium Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Mg Real (mg/L)</label>
+                    <input type="number" id="curr-mg-std" placeholder="1250" oninput="calcMgStd()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Mg Target (mg/L)</label>
+                    <input type="number" id="targ-mg-std" placeholder="1350" oninput="calcMgStd()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-purple-400"><span id="out-mg-std">0</span> ml</span></div>
+                <p id="split-mg-std" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 1200 - 1450 mg/l. Kenaikan Maksimal 50 mg/l per hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 1200 - 1450 mg/l. Max increase 50 mg/l per day.</p>
+            </div>
+        </div>
+
+        <!-- MAGNESIUM PLUS HLAB -->
+        <div id="prod-mg-plus" class="prod-content bg-gray-800 p-4 rounded-xl border border-fuchsia-800 shadow-md">
+            <h3 class="text-sm font-black text-fuchsia-400 mb-3 uppercase tracking-wider">Magnesium Plus Hlab</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Mg Real (mg/L)</label>
+                    <input type="number" id="curr-mg-plus" placeholder="1250" oninput="calcMgPlus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Mg Target (mg/L)</label>
+                    <input type="number" id="targ-mg-plus" placeholder="1350" oninput="calcMgPlus()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 mt-2 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Total Dosis Kebutuhan:</span><span class="text-base font-black text-fuchsia-400"><span id="out-mg-plus">0</span> ml</span></div>
+                <p id="split-mg-plus" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Rekomendasi: 1200 - 1450 mg/l. Kenaikan Maksimal 50 mg/l per hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended: 1200 - 1450 mg/l. Max increase 50 mg/l per day.</p>
+            </div>
+        </div>
+
+        <!-- PHOSPHATE PLUS (REVISI TOTAL SESUAI INSTRUKSI) -->
+        <div id="prod-po4-plus" class="prod-content bg-gray-800 p-4 rounded-xl border border-amber-800 shadow-md">
+            <h3 class="text-sm font-black text-amber-400 mb-3 uppercase tracking-wider">Phosphate Plus</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">PO4 Sebelum (ppm)</label>
+                    <input type="number" id="curr-po4" step="0.01" placeholder="0.01" oninput="calcPo4()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">PO4 yang Diinginkan (ppm)</label>
+                    <input type="number" id="targ-po4" step="0.01" placeholder="0.05" oninput="calcPo4()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Dosis PO4 Plus:</span><span class="text-base font-black text-amber-400"><span id="out-po4">0.0</span> ml</span></div>
+                <p id="split-po4" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Tingkat yang direkomendasikan: 0.03 - 0.09 ppm. Kenaikan Maksimal 0.02 ppm / hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended level: 0.03 - 0.09 ppm. Max increase 0.02 ppm / day.</p>
+            </div>
+        </div>
+
+        <!-- NITRAT PLUS (REVISI TOTAL SESUAI INSTRUKSI) -->
+        <div id="prod-no3-plus" class="prod-content bg-gray-800 p-4 rounded-xl border border-orange-800 shadow-md">
+            <h3 class="text-sm font-black text-orange-400 mb-3 uppercase tracking-wider">Nitrat Plus</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Nitrat Sebelum (ppm)</label>
+                    <input type="number" id="curr-no3" step="0.5" placeholder="2.0" oninput="calcNo3()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Nitrat yang Diinginkan (ppm)</label>
+                    <input type="number" id="targ-no3" step="0.5" placeholder="10.0" oninput="calcNo3()" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-900/80 rounded border border-gray-700 text-xs space-y-1.5">
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-medium">Dosis Nitrat Plus:</span><span class="text-base font-black text-orange-400"><span id="out-no3">0.0</span> ml</span></div>
+                <p id="split-no3" class="text-[11px] text-amber-400 font-medium bg-amber-950/20 p-1.5 rounded"></p>
+                <p data-lang="id" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1">⚠️ Tingkat yang direkomendasikan: 5 - 20 ppm. Kenaikan Maksimal 2 ppm / hari.</p>
+                <p data-lang="en" class="text-[10px] text-gray-500 border-t border-gray-800 pt-1 hidden">⚠️ Recommended level: 5 - 20 ppm. Max increase 2 ppm / day.</p>
+            </div>
+        </div>
+
+        <!-- REDUCER PLUS -->
+        <div id="prod-reducer-plus" class="prod-content bg-gray-800 p-4 rounded-xl border border-rose-800 shadow-md">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+                <h3 class="text-xs font-black text-rose-400 uppercase tracking-wider">Hlab Reducer Plus</h3>
+                <span id="badge-rp" class="text-[9px] px-2 py-0.5 rounded font-black bg-green-950 text-green-400 border border-green-800">LOW DOSIS</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-[11px] bg-gray-900/40 p-2.5 rounded border border-gray-700/60">
+                <div><label class="block text-gray-400 mb-1">Real PO4 (ppm)</label><input type="number" id="tk-rp-p" step="0.01" placeholder="0.05" oninput="calcReducers()" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5 text-white font-bold"></div>
+                <div><label class="block text-gray-400 mb-1">Real NO3 (ppm)</label><input type="number" id="tk-rp-n" step="1" placeholder="5" oninput="calcReducers()" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5 text-white font-bold"></div>
+            </div>
+            <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 space-y-2.5 text-xs">
+                <div class="flex justify-between font-bold text-gray-200 border-b border-gray-800 pb-1.5"><span>Dosis Harian Maksimal:</span><span id="out-rp-max" class="text-rose-400 text-sm font-black">0 ml/day</span></div>
+                <div class="flex justify-between text-gray-400 bg-gray-800/50 p-1.5 rounded"><span>Hari ke-1 (50% Dosis Max):</span><span id="out-rp-d1" class="font-black text-gray-100 text-sm">0 ml</span></div>
+                
+                <div class="text-[10px] space-y-1 text-gray-300 border-t border-gray-800 pt-2">
+                    <p class="text-amber-400 font-bold">📌 PANDUAN DOSING & BLOOMING:</p>
+                    <p>• Hari ke-1 tuang 50%. Pantau apakah terjadi *Bacterial Blooming* (air keruh) atau tidak.</p>
+                    <p>• Jika <b class="text-red-400">Blooming</b>: Berarti rumbak/filtrasi kurang. Tambah rumbak, <b>STOP dosing</b> sampai air bening kembali. Jika blooming sangat parah, wajib pasang aerator.</p>
+                    <p>• Setelah air jernih kembali, turunkan dosis harian lagi sebesar 50% dari dosis sebelumnya.</p>
+                    <p>• Hari ke-2: Jika tidak blooming, naikkan perlahan sebesar <b>1 ml / hari</b> sampai menyentuh batas dosis maksimal harian.</p>
+                    <p>• Hari ke-14: Lakukan tes parameter air (Testkit). Jika parameter sudah turun, sesuaikan kembali tier dosisnya.</p>
+                </div>
+                <div class="text-[10px] text-gray-400 bg-gray-950/40 p-2 rounded space-y-0.5 border border-gray-800">
+                    <p>🧪 <b>Cara Pakai:</b> Tuang langsung di Chamber Rumah Bakteri.</p>
+                    <p>❌ <b>Skimmer:</b> TIDAK perlu mematikan skimmer.</p>
+                    <p>🤖 <b>Dosing Pump:</b> Sangat aman dan bisa ditaruh di autodosing.</p>
+                    <p>🦠 <b>Optimal:</b> Gunakan bersama <i>Hlab Life Bacteria</i> untuk hasil maksimal.</p>
+                    <p class="text-pink-400 font-medium">⏳ JEDA: Hlab Life Bacteria (Pagi) | Reducer Plus (Malam).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- REDUCER HLAB -->
+        <div id="prod-reducer-hlab" class="prod-content bg-gray-800 p-4 rounded-xl border border-pink-900 shadow-md">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+                <h3 class="text-xs font-black text-pink-400 uppercase tracking-wider">Hlab Reducer</h3>
+                <span id="badge-r" class="text-[9px] px-2 py-0.5 rounded font-black bg-green-950 text-green-400 border border-green-800">LOW DOSIS</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3 text-[11px] bg-gray-900/40 p-2.5 rounded border border-gray-700/60">
+                <div><label class="block text-gray-400 mb-1">Real PO4 (ppm)</label><input type="number" id="tk-r-p" step="0.01" placeholder="0.05" oninput="calcReducers()" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5 text-white font-bold"></div>
+                <div><label class="block text-gray-400 mb-1">Real NO3 (ppm)</label><input type="number" id="tk-r-n" step="1" placeholder="5" oninput="calcReducers()" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5 text-white font-bold"></div>
+            </div>
+            <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 text-xs space-y-3">
+                <div class="grid grid-cols-2 gap-y-1.5 text-gray-400 bg-gray-800/30 p-2 rounded border border-gray-800">
+                    <span class="font-bold text-gray-200">Dosis Harian Maksimal:</span> <span id="out-r-max" class="font-black text-pink-400 text-right text-sm">0 ml</span>
+                    <span class="border-t border-gray-800/60 pt-1">Hari 1 & 2 (50%):</span> <span id="out-r-d1" class="font-semibold text-gray-200 text-right border-t border-gray-800/60">0 ml</span>
+                    <span>Hari 3 (75%):</span> <span id="out-r-d3" class="font-semibold text-gray-300 text-right">0 ml</span>
+                    <span class="font-bold text-emerald-400">Hari 4-9 (100%):</span> <span id="out-r-d4" class="font-black text-emerald-400 text-right">0 ml</span>
+                </div>
+
+                <div class="text-[10px] space-y-1 text-gray-300 border-t border-gray-800 pt-2">
+                    <p class="text-amber-400 font-bold">📌 PANDUAN DOSING & BLOOMING:</p>
+                    <p>• Hari ke-1 tuang 50%. Jika <b class="text-red-400">Blooming / Keruh</b>, stop dosing sampai bening, tambah rumbak/aerator. Setelah bening turunkan dosis lagi 50%, lalu naikkan pelan-hari demi hari hingga dosis maks.</p>
+                    <p>• Hari ke-10: Lakukan cek parameter lewat Testkit. Jika kadar nutrisi telah turun, dosis disesuaikan mengikuti tier-nya.</p>
+                </div>
+                <div class="text-[10px] text-gray-400 bg-gray-950/40 p-2 rounded space-y-0.5 border border-gray-800">
+                    <p>🧪 <b>Cara Pakai:</b> Tuang langsung di Chamber Rumah Bakteri.</p>
+                    <p>❌ <b>Skimmer:</b> TIDAK perlu mematikan skimmer.</p>
+                    <p>🤖 <b>Dosing Pump:</b> Aman untuk autodosing.</p>
+                    <p>🦠 <b>Optimal:</b> Selalu gunakan bersama <i>Hlab Life Bacteria</i>.</p>
+                    <p class="text-pink-400 font-medium">⏳ JEDA: Hlab Life Bacteria (Pagi) | Reducer Hlab (Malam).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BACTERIA -->
+        <div id="prod-bacteria-all" class="prod-content bg-gray-800 p-4 rounded-xl border border-lime-800 shadow-md">
+            <h3 class="text-sm font-black text-lime-400 mb-3 uppercase tracking-wider">Hlab Life Bacteria</h3>
+            <div class="grid grid-cols-2 gap-3 text-center text-xs mb-3">
+                <div class="bg-gray-900 p-3 rounded border border-gray-700">
+                    <span class="text-gray-400 block mb-1">New Tank (Cycling)</span>
+                    <span id="out-bac-c" class="text-lg font-black text-lime-400">0</span> <span class="text-[10px] text-gray-400">ml / hari</span>
+                </div>
+                <div class="bg-gray-900 p-3 rounded border border-gray-700">
+                    <span class="text-gray-400 block mb-1">Maintenance</span>
+                    <span id="out-bac-m" class="text-lg font-black text-teal-400">0</span> <span class="text-[10px] text-gray-400">ml / hari</span>
+                </div>
+            </div>
+            <div class="text-[10px] text-amber-400 bg-amber-950/20 p-2.5 rounded border border-amber-900/50 space-y-1">
+                <p class="font-bold">⚠️ WARNING PENGGUNAAN:</p>
+                <p>Wajib berikan jeda waktu dosing ketika digunakan bersamaan dengan Hlab Reducer atau Reducer Plus.</p>
+                <p class="font-semibold text-white">☀️ Hlab Life Bacteria dituangkan PAGI hari.</p>
+                <p class="font-semibold text-white">🌙 Hlab Reducer / Reducer Plus dituangkan MALAM hari.</p>
+            </div>
+        </div>
+
+        <!-- TRACE ELEMENTS -->
+        <div id="prod-trace-a" class="prod-content bg-gray-800 p-4 rounded-xl border border-green-800 shadow-md">
+            <h3 class="text-sm font-black text-green-400 mb-2 uppercase tracking-wider">Hlab Trace Element A</h3>
+            <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center text-xs mb-3">
+                <div><span class="text-gray-200 font-bold">Dosis Baku / 3 Hari Sekali:</span></div>
+                <span class="text-lg font-black text-green-400"><span id="out-tr-a">0</span> ml</span>
+            </div>
+            <p class="text-[10px] text-red-400 bg-red-950/20 p-2 rounded border border-red-900/40">⚠️ <b>WARNING:</b> Penggunaan Trace ABCDE baru boleh dilakukan setelah terbukti ada penyerapan parameter utama (Big 3).</p>
+        </div>
+
+        <div id="prod-trace-b" class="prod-content bg-gray-800 p-4 rounded-xl border border-rose-800 shadow-md">
+            <h3 class="text-sm font-black text-rose-400 mb-2 uppercase tracking-wider">Hlab Trace Element B</h3>
+            <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center text-xs mb-3">
+                <div><span class="text-gray-200 font-bold">Dosis Baku / 3 Hari Sekali:</span></div>
+                <span class="text-lg font-black text-rose-400"><span id="out-tr-b">0</span> ml</span>
+            </div>
+            <p class="text-[10px] text-red-400 bg-red-950/20 p-2 rounded border border-red-900/40">⚠️ <b>WARNING:</b> Penggunaan Trace ABCDE baru boleh dilakukan setelah terbukti ada penyerapan parameter utama (Big 3).</p>
+        </div>
+
+        <div id="prod-trace-c" class="prod-content bg-gray-800 p-4 rounded-xl border border-blue-800 shadow-md">
+            <h3 class="text-sm font-black text-blue-400 mb-2 uppercase tracking-wider">Hlab Trace Element C</h3>
+            <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center text-xs mb-3">
+                <div><span class="text-gray-200 font-bold">Dosis Baku / 3 Hari Sekali:</span></div>
+                <span class="text-lg font-black text-blue-400"><span id="out-tr-c">0</span> ml</span>
+            </div>
+            <p class="text-[10px] text-red-400 bg-red-950/20 p-2 rounded border border-red-900/40">⚠️ <b>WARNING:</b> Penggunaan Trace ABCDE baru boleh dilakukan setelah terbukti ada penyerapan parameter utama (Big 3).</p>
+        </div>
+
+        <div id="prod-trace-d" class="prod-content bg-gray-800 p-4 rounded-xl border border-purple-800 shadow-md">
+            <h3 class="text-sm font-black text-purple-400 mb-2 uppercase tracking-wider">Hlab Trace Element D</h3>
+            <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center text-xs mb-3">
+                <div><span class="text-gray-200 font-bold">Dosis Baku / 3 Hari Sekali:</span></div>
+                <span class="text-lg font-black text-purple-400"><span id="out-tr-d">0</span> ml</span>
+            </div>
+            <p class="text-[10px] text-red-400 bg-red-950/20 p-2 rounded border border-red-900/40">⚠️ <b>WARNING:</b> Penggunaan Trace ABCDE baru boleh dilakukan setelah terbukti ada penyerapan parameter utama (Big 3).</p>
+        </div>
+
+        <div id="prod-trace-e" class="prod-content bg-gray-800 p-4 rounded-xl border border-yellow-800 shadow-md">
+            <h3 class="text-sm font-black text-yellow-400 mb-2 uppercase tracking-wider">Hlab Trace Element E</h3>
+            <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center text-xs mb-3">
+                <div><span class="text-gray-200 font-bold">Dosis Baku / 3 Hari Sekali:</span></div>
+                <span class="text-lg font-black text-yellow-400"><span id="out-tr-e">0</span> ml</span>
+            </div>
+            <p class="text-[10px] text-red-400 bg-red-950/20 p-2 rounded border border-red-900/40">⚠️ <b>WARNING:</b> Penggunaan Trace ABCDE baru boleh dilakukan setelah terbukti ada penyerapan parameter utama (Big 3).</p>
+        </div>
+
+    </main>
+
+    <!-- FLOATING WA BUTTON -->
+    <a href="https://wa.me/6282223076060?text=Halo%20Hlab.id%2C%20saya%20ingin%20konsultasi%20mengenai%20kalkulasi%20dosis%20produk%20reef%20aquarium." 
+       target="_blank" rel="noopener noreferrer" 
+       class="fixed bottom-5 right-5 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full p-3.5 shadow-2xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95 group">
+        <svg class="w-7 h-7 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.623-1.023-5.09-2.885-6.956C16.43 2.02 13.969.995 11.352.995 5.918.995 1.494 5.365 1.49 10.796c-.001 1.7.457 3.36 1.326 4.832L1.85 21.192l5.798-1.517zM17.15 14.15c-.295-.147-1.743-.86-2.012-.958-.267-.099-.463-.147-.658.147-.196.295-.757.958-.93 1.15-.173.192-.347.214-.64.068-.294-.146-1.24-.457-2.361-1.457-.872-.778-1.46-1.74-1.63-2.03-.173-.294-.018-.454.13-.6.132-.133.294-.344.44-.517.146-.172.196-.295.294-.49.099-.198.05-.37-.025-.519-.074-.148-.659-1.591-.902-2.174-.237-.573-.48-.494-.66-.503-.169-.009-.364-.01-.559-.01-.195 0-.514.074-.783.37-.269.296-1.026 1.002-1.026 2.443 0 1.44 1.049 2.839 1.196 3.037.147.197 2.064 3.15 5.001 4.42.698.303 1.243.483 1.667.617.702.223 1.342.192 1.847.117.564-.084 1.743-.711 1.987-1.396.244-.686.244-1.275.17-1.396-.074-.122-.27-.195-.565-.341z"/>
+        </svg>
+        <span id="wa-tooltip" class="absolute right-16 bg-gray-850 border border-gray-700 text-xs px-2.5 py-1 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap text-green-400 font-bold shadow-md">Tanya Admin WA</span>
+    </a>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        let currentLang = 'id';
+        let activeProdId = 'kh-std';
+
+        window.onload = function() {
+            setLanguage('id');
+            runCalculation();
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('btn-lang-id').className = lang === 'id' ? "px-2 py-1 rounded bg-blue-600 text-white font-bold cursor-pointer" : "px-2 py-1 rounded bg-gray-800 text-gray-400 font-bold cursor-pointer";
+            document.getElementById('btn-lang-en').className = lang === 'en' ? "px-2 py-1 rounded bg-blue-600 text-white font-bold cursor-pointer" : "px-2 py-1 rounded bg-gray-800 text-gray-400 font-bold cursor-pointer";
+            document.getElementById('wa-tooltip').innerText = lang === 'id' ? "Tanya Admin WA" : "Chat Admin WA";
+
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                if(el.getAttribute('data-lang') === lang) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+
+            const isId = lang === 'id';
+            document.getElementById('grp-big3').label = isId ? "🪸 PARAMETER UTAMA (BIG 3)" : "🪸 MAIN PARAMETERS (BIG 3)";
+            document.getElementById('grp-nutrient').label = isId ? "📈 NUTRIENT RAISER & REDUCER" : "📈 NUTRIENT RAISER & REDUCER";
+            document.getElementById('grp-bacteria').label = isId ? "🦠 LIFE BACTERIA" : "🦠 LIFE BACTERIA";
+            document.getElementById('grp-trace').label = isId ? "🎨 TRACE ELEMENT" : "🎨 TRACE ELEMENT";
+
+            runCalculation();
+        }
+
+        function switchProduct(prodId) {
+            activeProdId = prodId;
+            document.querySelectorAll('.prod-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('prod-' + prodId).classList.add('active');
+            runCalculation();
+        }
+
+        function getVol() {
+            return parseFloat(document.getElementById('globalVolume').value) || 0;
+        }
+
+        // FUNGSI GLOBAL SPLIT DOSIS BERDASARKAN BATAS MAKSIMAL HARIAN TANK CUSTOMER
+        function generateSplitText(totalDose, maxChange, actualChange, v) {
+            if (totalDose <= 0 || v <= 0) return "";
+            
+            if (actualChange > maxChange && maxChange > 0) {
+                const days = Math.ceil(actualChange / maxChange);
+                const maxDosePerDay = totalDose / days;
+                
+                return currentLang === 'id'
+                    ? `⚠️ Melebihi batas aman harian! Dosis maks harian tank Anda: <b class="text-white">${maxDosePerDay.toFixed(1)} ml / hari</b>. Dosis dibagi rata selama <b class="text-white">${days} hari</b>.`
+                    : `⚠️ Exceeds daily safe limit! Max daily dose for your tank: <b class="text-white">${maxDosePerDay.toFixed(1)} ml / day</b>. Split equally for <b class="text-white">${days} days</b>.`;
+            }
+            return currentLang === 'id' ? `✅ Aman langsung di-dosing dalam 1 hari.` : `✅ Safe to dose at once in 1 day.`;
+        }
+
+        function runCalculation() {
+            switch(activeProdId) {
+                case 'kh-std': calcKhStd(); break;
+                case 'kh-plus': calcKhPlus(); break;
+                case 'kh-minus': calcKhMinus(); break;
+                case 'ca-std': calcCaStd(); break;
+                case 'ca-plus': calcCaPlus(); break;
+                case 'mg-std': calcMgStd(); break;
+                case 'mg-plus': calcMgPlus(); break;
+                case 'po4-plus': calcPo4(); break;
+                case 'no3-plus': calcNo3(); break;
+                case 'reducer-plus':
+                case 'reducer-hlab': calcReducers(); break;
+                case 'bacteria-all': calcBacteria(); break;
+                case 'trace-a':
+                case 'trace-b':
+                case 'trace-c':
+                case 'trace-d':
+                case 'trace-e': calcTrace(); break;
+            }
+        }
+
+        // --- RUMUS KELOMPOK BIG 3 ---
+        function calcKhStd() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-kh-std').value)||0, t = parseFloat(document.getElementById('targ-kh-std').value)||0;
+            const diff = Math.max(0, t - c);
+            const dose = v > 0 && t > 0 ? (diff * (v / 100) * (20 / 0.5)) : 0;
+            document.getElementById('out-kh-std').innerText = dose.toFixed(1);
+            document.getElementById('split-kh-std').innerHTML = generateSplitText(dose, 0.5, diff, v);
+        }
+
+        function calcKhPlus() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-kh-plus').value)||0, t = parseFloat(document.getElementById('targ-kh-plus').value)||0;
+            const diff = Math.max(0, t - c);
+            const dose = v > 0 && t > 0 ? (diff * (v / 100) * (1 / 0.1)) : 0;
+            document.getElementById('out-kh-plus').innerText = dose.toFixed(1);
+            document.getElementById('split-kh-plus').innerHTML = generateSplitText(dose, 0.5, diff, v);
+        }
+
+        function calcKhMinus() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-kh-minus').value)||0, t = parseFloat(document.getElementById('targ-kh-minus').value)||0;
+            const diff = Math.max(0, c - t);
+            const dose = v > 0 && c > t ? (diff * (v / 100) * (1.6 / 0.5)) : 0;
+            document.getElementById('out-kh-minus').innerText = dose.toFixed(1);
+            document.getElementById('split-kh-minus').innerHTML = generateSplitText(dose, 0.5, diff, v);
+        }
+
+        function calcCaStd() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-ca-std').value)||0, t = parseFloat(document.getElementById('targ-ca-std').value)||0;
+            const diff = Math.max(0, t - c);
+            const dose = v > 0 && t > 0 ? (diff * (v / 100) * (10 / 3.6)) : 0;
+            document.getElementById('out-ca-std').innerText = dose.toFixed(1);
+            document.getElementById('split-ca-std').innerHTML = generateSplitText(dose, 30, diff, v);
+        }
+
+        function calcCaPlus() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-ca-plus').value)||0, t = parseFloat(document.getElementById('targ-ca-plus').value)||0;
+            const diff = Math.max(0, t - c);
+            const dose = v > 0 && t > 0 ? (diff * (v / 100) * (1 / 1)) : 0;
+            document.getElementById('out-ca-plus').innerText = dose.toFixed(1);
+            document.getElementById('split-ca-plus').innerHTML = generateSplitText(dose, 30, diff, v);
+        }
+
+        function calcMgStd() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-mg-std').value)||0, t = parseFloat(document.getElementById('targ-mg-std').value)||0;
+            const diff = Math.max(0, t - c);
+            const dose = v > 0 && t > 0 ? (diff * (v / 100) * (10 / 2.4)) : 0;
+            document.getElementById('out-mg-std').innerText = dose.toFixed(1);
+            document.getElementById('split-mg-std').innerHTML = generateSplitText(dose, 50, diff, v);
+        }
+
+        function calcMgPlus() {
+            const v = getVol(), c = parseFloat(document.getElementById('curr-mg-plus').value)||0, t = parseFloat(document.getElementById('targ-mg-plus').value)||0;
+            const diff = Math.max(0, t - c);
+            const dose = v > 0 && t > 0 ? (diff * (v / 100) * (1 / 1)) : 0;
+            document.getElementById('out-mg-plus').innerText = dose.toFixed(1);
+            document.getElementById('split-mg-plus').innerHTML = generateSplitText(dose, 50, diff, v);
+        }
+
+        // --- RUMUS REVISI: PHOSPHATE & NITRAT PLUS MURNI HITUNG SELISIH ---
+        function calcPo4() {
+            const v = getVol();
+            const c = parseFloat(document.getElementById('curr-po4').value) || 0;
+            const t = parseFloat(document.getElementById('targ-po4').value) || 0;
+            const diff = Math.max(0, t - c);
+            
+            // Rumus baku raiser Hlab: Selisih PO4 * (Volume Tank / 100L) * (1ml / 0.01ppm efek raiser)
+            const dose = v > 0 && t > c ? (diff * (v / 100) * (1 / 0.01)) : 0;
+            
+            document.getElementById('out-po4').innerText = dose.toFixed(1);
+            document.getElementById('split-po4').innerHTML = generateSplitText(dose, 0.02, diff, v);
+        }
+
+        function calcNo3() {
+            const v = getVol();
+            const c = parseFloat(document.getElementById('curr-no3').value) || 0;
+            const t = parseFloat(document.getElementById('targ-no3').value) || 0;
+            const diff = Math.max(0, t - c);
+            
+            // Rumus baku raiser Hlab: Selisih NO3 * (Volume Tank / 100L) * (1ml / 1ppm efek raiser)
+            const dose = v > 0 && t > c ? (diff * (v / 100) * (1 / 1)) : 0;
+            
+            document.getElementById('out-no3').innerText = dose.toFixed(1);
+            document.getElementById('split-no3').innerHTML = generateSplitText(dose, 2, diff, v);
+        }
+
+        // --- LOGIK REDUCER (BERDASARKAN TIER LEVEL) ---
+        function calcReducers() {
+            const v = getVol();
+            const isRP = activeProdId === 'reducer-plus';
+            const rawP = isRP ? document.getElementById('tk-rp-p').value : document.getElementById('tk-r-p').value;
+            const rawN = isRP ? document.getElementById('tk-rp-n').value : document.getElementById('tk-r-n').value;
+            
+            const p = parseFloat(rawP) || 0;
+            const n = parseFloat(rawN) || 0;
+            
+            let lvl = "low";
+            if(rawP !== "" || rawN !== "") {
+                if (n >= 30 || p > 0.25) lvl = "high";
+                else if ((n >= 11 && n <= 29) || (p >= 0.11 && p <= 0.25)) lvl = "medium";
+            }
+            
+            const badge = document.getElementById(isRP ? 'badge-rp' : 'badge-r');
+            badge.innerText = lvl.toUpperCase() + " DOSIS";
+            badge.className = lvl === 'high' ? "text-[9px] px-2 py-0.5 rounded font-black bg-red-950 text-red-400 border border-red-800" : (lvl === 'medium' ? "text-[9px] px-2 py-0.5 rounded font-black bg-amber-950 text-amber-400 border border-amber-800" : "text-[9px] px-2 py-0.5 rounded font-black bg-green-950 text-green-400 border border-green-800");
+
+            if(isRP) {
+                let baseDose = lvl === 'high' ? 5.5 : (lvl === 'medium' ? 3.5 : 1.5);
+                let rMax = v > 0 && (rawP !== "" || rawN !== "") ? (baseDose * (v / 100)) : 0;
+                document.getElementById('out-rp-max').innerText = rMax.toFixed(1) + " ml/hari";
+                document.getElementById('out-rp-d1').innerText = (rMax * 0.5).toFixed(1) + " ml";
+            } else {
+                let baseDose = lvl === 'high' ? 15 : (lvl === 'medium' ? 7.5 : 2);
+                let rMax = v > 0 && (rawP !== "" || rawN !== "") ? (baseDose * (v / 100)) : 0;
+                document.getElementById('out-r-max').innerText = rMax.toFixed(1) + " ml";
+                document.getElementById('out-r-d1').innerText = (rMax * 0.5).toFixed(1) + " ml";
+                document.getElementById('out-r-d3').innerText = (rMax * 0.75).toFixed(1) + " ml";
+                document.getElementById('out-r-d4').innerText = rMax.toFixed(1) + " ml";
+            }
+        }
+
+        function calcBacteria() {
+            const v = getVol();
+            document.getElementById('out-bac-c').innerText = v > 0 ? (5 * (v / 100)).toFixed(1) : "0.0";
+            document.getElementById('out-bac-m').innerText = v > 0 ? (2.5 * (v / 100)).toFixed(1) : "0.0";
+        }
+
+        function calcTrace() {
+            const v = getVol();
+            document.getElementById('out-tr-a').innerText = v > 0 ? (0.5 * (v / 100)).toFixed(1) : "0.0";
+            document.getElementById('out-tr-b').innerText = v > 0 ? (1.0 * (v / 100)).toFixed(1) : "0.0";
+            document.getElementById('out-tr-c').innerText = v > 0 ? (1.0 * (v / 100)).toFixed(1) : "0.0";
+            document.getElementById('out-tr-d').innerText = v > 0 ? (0.5 * (v / 100)).toFixed(1) : "0.0";
+            document.getElementById('out-tr-e').innerText = v > 0 ? (0.5 * (v / 100)).toFixed(1) : "0.0";
+        }
+    </script>
+</body>
+</html>
+
